@@ -1,0 +1,16 @@
+table: |
+  include tables/unicode.dis
+  include tables/en-us-comp8.ctb
+  noback pass2 $d @145 # digit
+  noback pass2 $D @1457 # literary digit
+  noback pass2 $l @123 # leter
+  noback pass2 $m @134 # math
+  noback pass2 $s @234 # space
+  noback pass2 $S @2347 # sign
+  noback pass2 $u @136 # lowercase
+  noback pass2 $U @1367 # uppercase
+tests:
+
+- - 5
+  - ⠙
+
