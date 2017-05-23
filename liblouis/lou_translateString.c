@@ -902,29 +902,8 @@ passDoAction ()
 	dest += passInstructions[passIC + 1];
 	passIC += passInstructions[passIC + 1] + 2;
 	break;
-      case pass_groupstart:
-	ruleOffset = (passInstructions[passIC + 1] << 16) |
-	  passInstructions[passIC + 2];
-	rule = (TranslationTableRule *) & table->ruleArea[ruleOffset];
-	srcMapping[dest] = prevSrcMapping[startMatch];
-	currentOutput[dest++] = rule->charsdots[2 * passCharDots];
-	passIC += 3;
-	break;
-      case pass_groupend:
-	ruleOffset = (passInstructions[passIC + 1] << 16) |
-	  passInstructions[passIC + 2];
-	rule = (TranslationTableRule *) & table->ruleArea[ruleOffset];
-	srcMapping[dest] = prevSrcMapping[startMatch];
-	currentOutput[dest++] = rule->charsdots[2 * passCharDots + 1];
-	passIC += 3;
-	break;
       case pass_swap:
 	if (!swapReplace (startReplace, endReplace))
-	  return 0;
-	passIC += 3;
-	break;
-      case pass_groupreplace:
-	if (!groupingRule || !replaceGrouping ())
 	  return 0;
 	passIC += 3;
 	break;

@@ -115,7 +115,7 @@ handlePassGroupTest (const widechar *instructions, int *IC, int *itsTrue,
     case pass_groupend:
     {
       TranslationTableOffset ruleOffset = (instructions[*IC + 1] << 16) | instructions[*IC + 2];
-      TranslationTableRule *rule = (TranslationTableRule *) & table->ruleArea[ruleOffset];
+      TranslationTableRule *rule = (TranslationTableRule *) &table->ruleArea[ruleOffset];
 
       if (*IC == 0 || (*IC > 0 && instructions[*IC - 1] == pass_startReplace)) {
         *groupingRule = rule;
@@ -130,7 +130,7 @@ handlePassGroupTest (const widechar *instructions, int *IC, int *itsTrue,
 
       *src += 1;
       *IC += 3;
-      break;
+      return 1;
     }
 
     default:
@@ -139,11 +139,33 @@ handlePassGroupTest (const widechar *instructions, int *IC, int *itsTrue,
 }
 
 int
-handlePassGroupAction (const widechar *instructions, int *IC)
+handlePassGroupAction (const widechar *instructions, int *IC, const TranslationTableHeader *table, int passCharDots, widechar *output, int *dest, TranslationTableRule *groupingRule)
 {
-  switch (instructions[*IC])
-    {
-      default:
-        return 0;
+  switch (instructions[*IC]) {
+    case pass_groupstart: {
+      TranslationTableOffset ruleOffset = (instructions[*IC + 1] << 16) | instructions[*IC + 2];
+      TranslationTableRule *rule = (TranslationTableRule *) &table->ruleArea[ruleOffset];
+      srcMapping[dest] = prevSrcMapping[startMatch];
+      output[*dest++] = rule->charsdots[2 * passCharDots];
+      *IC += 3;
+      return 1;
     }
+
+    case pass_groupend: {
+      TranslationTableOffset ruleOffset = (instructions[*IC + 1] << 16) | instructions[*IC + 2];
+      TranslationTableRule *rule = (TranslationTableRule *) &table->ruleArea[ruleOffset];
+      srcMapping[dest] = prevSrcMapping[startMatch];
+      output[*dest++] = rule->charsdots[2 * passCharDots + 1];
+      *IC += 3;
+      return 1;
+    }
+
+    case pass_groupreplace:
+      if (!groupingRule || !replaceGrouping()) return 0;
+      *IC += 3;
+      return 1;
+
+    default:
+      return 0;
+  }
 }
