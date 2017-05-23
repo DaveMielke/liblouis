@@ -460,6 +460,7 @@ handleMultind ()
   return found;
 }
 
+static int passCharDots;
 static int passSrc;
 static const widechar *passInstructions;
 static int passIC;		/*Instruction counter */
@@ -467,6 +468,8 @@ static int startMatch;
 static int endMatch;
 static int startReplace;
 static int endReplace;
+static TranslationTableRule *groupingRule;
+static widechar groupingOpcode;
 
 static int back_passDoTest ();
 static int back_passDoAction ();
@@ -1350,18 +1353,18 @@ static int
 back_passDoTest ()
 {
   int k;
-  int m;
   int not = 0;
   TranslationTableCharacterAttributes attributes;
+  groupingRule = NULL;
   passSrc = src;
   passInstructions = &currentRule->charsdots[currentRule->charslen];
   passIC = 0;
   startMatch = passSrc;
   startReplace = -1;
   if (currentOpcode == CTO_Correct)
-    m = 0;
+    passCharDots = 0;
   else
-    m = 1;
+    passCharDots = 1;
   while (passIC < currentRule->dotslen)
     {
       int itsTrue = 1;
@@ -1419,7 +1422,7 @@ back_passDoTest ()
 		  break;
 		}
 	      if (!(back_findCharOrDots(currentInput[passSrc],
-					m)->attributes & attributes))
+					passCharDots)->attributes & attributes))
 		{
 		  itsTrue = 0;
 		  break;
@@ -1433,7 +1436,7 @@ back_passDoTest ()
 		   k++)
 		{
 		  if (!(back_findCharOrDots (currentInput[passSrc],
-					     m)->attributes & attributes))
+					     passCharDots)->attributes & attributes))
 		    break;
 		  passSrc++;
 		}
@@ -1455,8 +1458,16 @@ back_passDoTest ()
 	  return 1;
 	  break;
 	default:
-          if (handlePassVariableTest(passInstructions, &passIC, &itsTrue))
-            break;
+	  if (handlePassVariableTest(passInstructions, &passIC, &itsTrue)) {
+	    break;
+	  }
+
+	  if (handlePassGroupTest(passInstructions, &passIC, &itsTrue,
+				  table, passCharDots, currentInput, &passSrc,
+				  &groupingRule, &groupingOpcode)) {
+	    break;
+	  }
+
 	  return 0;
 	}
       if ((!not && !itsTrue) || (not && itsTrue))

@@ -709,6 +709,12 @@ extern int handlePassVariableTest (const widechar *instructions,
 extern int handlePassVariableAction (const widechar *instructions,
 				      int *IC);
 
+extern int handlePassGroupTest (const widechar *instructions, int *IC, int *itsTrue,
+				const TranslationTableHeader *table, int passCharDots,
+				const widechar *input, int *src,
+				TranslationTableRule **groupingRule,
+				widechar *groupingOpcode);
+
 int pattern_check(const widechar *input, const int input_start, const int
 		  input_minmax, const int input_dir, const widechar *expr_data,
 		  const TranslationTableHeader *t);

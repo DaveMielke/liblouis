@@ -443,7 +443,7 @@ swapReplace (int start, int end)
 }
 
 static TranslationTableRule *groupingRule;
-static widechar groupingOp;
+static widechar groupingOpcode;
 
 static int
 replaceGrouping ()
@@ -459,7 +459,7 @@ replaceGrouping ()
     table->ruleArea[replaceOffset];
   widechar replaceStart = replaceRule->charsdots[2 * passCharDots];
   widechar replaceEnd = replaceRule->charsdots[2 * passCharDots + 1];
-  if (groupingOp == pass_groupstart)
+  if (groupingOpcode == pass_groupstart)
     {
       curin[startReplace] = replaceStart;
       for (curPos = startReplace + 1; curPos < srcmax; curPos++)
@@ -510,7 +510,7 @@ removeGrouping ()
   widechar *curin = (widechar *) currentInput;
   int curPos;
   int level = 0;
-  if (groupingOp == pass_groupstart)
+  if (groupingOpcode == pass_groupstart)
     {
       for (curPos = startReplace + 1; curPos < srcmax; curPos++)
 	{
@@ -657,7 +657,7 @@ doPassSearch ()
 		  (currentInput[searchSrc] == rule->charsdots[2 *
 							      passCharDots +
 							      1]) ? 1 : 0;
-	      if (groupingRule != NULL && groupingOp == pass_groupstart
+	      if (groupingRule != NULL && groupingOpcode == pass_groupstart
 		  && rule == groupingRule)
 		{
 		  if (currentInput[searchSrc] == rule->charsdots[2 *
@@ -701,8 +701,6 @@ passDoTest ()
 {
   int k;
   int not = 0;
-  TranslationTableOffset ruleOffset = 0;
-  TranslationTableRule *rule = NULL;
   TranslationTableCharacterAttributes attributes = 0;
   groupingRule = NULL;
   passSrc = src;
@@ -804,28 +802,6 @@ passDoTest ()
 	    }
 	  passIC += 5;
 	  break;
-	case pass_groupstart:
-	case pass_groupend:
-	  ruleOffset = (passInstructions[passIC + 1] << 16) |
-	    passInstructions[passIC + 2];
-	  rule = (TranslationTableRule *) & table->ruleArea[ruleOffset];
-	  if (passIC == 0 || (passIC > 0 && passInstructions[passIC - 1] ==
-			      pass_startReplace))
-	    {
-	      groupingRule = rule;
-	      groupingOp = passInstructions[passIC];
-	    }
-	  if (passInstructions[passIC] == pass_groupstart)
-	    itsTrue = (currentInput[passSrc] == rule->charsdots[2 *
-								passCharDots])
-	      ? 1 : 0;
-	  else
-	    itsTrue = (currentInput[passSrc] == rule->charsdots[2 *
-								passCharDots +
-								1]) ? 1 : 0;
-	  passSrc++;
-	  passIC += 3;
-	  break;
 	case pass_swap:
 	  itsTrue = swapTest (passIC, &passSrc);
 	  passIC += 5;
@@ -847,8 +823,16 @@ passDoTest ()
 	  return 1;
 	  break;
 	default:
-          if (handlePassVariableTest(passInstructions, &passIC, &itsTrue))
-            break;
+	  if (handlePassVariableTest(passInstructions, &passIC, &itsTrue)) {
+	    break;
+	  }
+
+	  if (handlePassGroupTest(passInstructions, &passIC, &itsTrue,
+				  table, passCharDots, currentInput, &passSrc,
+				  &groupingRule, &groupingOpcode)) {
+	    break;
+	  }
+
 	  return 0;
 	}
       if ((!not && !itsTrue) || (not && itsTrue))

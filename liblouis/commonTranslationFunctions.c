@@ -102,3 +102,48 @@ handlePassVariableAction (const widechar *instructions, int *IC)
         return 0;
     }
 }
+
+int
+handlePassGroupTest (const widechar *instructions, int *IC, int *itsTrue,
+		     const TranslationTableHeader *table, int passCharDots,
+		     const widechar *input, int *src,
+		     TranslationTableRule **groupingRule,
+		     widechar *groupingOpcode)
+{
+  switch (instructions[*IC]) {
+    case pass_groupstart:
+    case pass_groupend:
+    {
+      TranslationTableOffset ruleOffset = (instructions[*IC + 1] << 16) | instructions[*IC + 2];
+      TranslationTableRule *rule = (TranslationTableRule *) & table->ruleArea[ruleOffset];
+
+      if (*IC == 0 || (*IC > 0 && instructions[*IC - 1] == pass_startReplace)) {
+        *groupingRule = rule;
+        *groupingOpcode = instructions[*IC];
+      }
+
+      if (instructions[*IC] == pass_groupstart) {
+        *itsTrue = (input[*src] == rule->charsdots[2 * passCharDots])? 1: 0;
+      } else {
+        *itsTrue = (input[*src] == rule->charsdots[2 * passCharDots + 1])? 1: 0;
+      }
+
+      *src += 1;
+      *IC += 3;
+      break;
+    }
+
+    default:
+      return 0;
+  }
+}
+
+int
+handlePassGroupAction (const widechar *instructions, int *IC)
+{
+  switch (instructions[*IC])
+    {
+      default:
+        return 0;
+    }
+}
